@@ -10,9 +10,10 @@ const scoreLiveness = document.getElementById('score-liveness');
 const scoreRisk = document.getElementById('score-risk');
 const sessionId = document.getElementById('session-id');
 
-// Config
-const BLINK_THRESHOLD = 0.25; // EAR threshold
-const TURN_THRESHOLD = 0.3; // Yaw threshold
+// Config - HARDENED THRESHOLDS
+const BLINK_CLOSED_THRESHOLD = 0.15; // Stricter: Eyes must be very closed
+const BLINK_OPEN_THRESHOLD = 0.30;   // Eyes must be clearly open
+const TURN_THRESHOLD = 0.4;          // Head must turn significantly
 const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/';
 
 // State Machine
@@ -20,8 +21,7 @@ const STATE = {
     LOADING: 'loading',
     SCANNING: 'scanning',
     CHALLENGE_BLINK: 'challenge_blink',
-    CHALLENGE_TURN_LEFT: 'challenge_turn_left',
-    CHALLENGE_TURN_RIGHT: 'challenge_turn_right',
+    CHALLENGE_TURN: 'challenge_turn',
     VERIFIED: 'verified',
     REJECTED: 'rejected'
 };
@@ -29,6 +29,9 @@ const STATE = {
 let currentState = STATE.LOADING;
 let livenessScore = 0;
 let riskScore = 0;
+
+// Blink State Tracking
+let blinkState = 'OPEN'; // OPEN -> CLOSING -> CLOSED -> OPENING -> OPEN (Complete Blink)
 
 // Initialize
 async function init() {
@@ -48,7 +51,6 @@ async function loadModels() {
     instructionText.textContent = "Loading Neural Networks...";
     await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
     await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-    // await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
     updateState(STATE.SCANNING);
 }
 
@@ -80,11 +82,12 @@ function updateState(newState) {
             instructionText.textContent = "Blink Your Eyes Now";
             instructionIcon.textContent = "👀";
             progressFill.style.width = "33%";
+            blinkState = 'OPEN'; // Reset blink state
             break;
-        case STATE.CHALLENGE_TURN_LEFT:
+        case STATE.CHALLENGE_TURN:
             statusBadge.textContent = "LIVENESS CHECK 2/2";
-            instructionText.textContent = "Turn Head Left";
-            instructionIcon.textContent = "⬅️";
+            instructionText.textContent = "Turn Head Left or Right";
+            instructionIcon.textContent = "↔️";
             progressFill.style.width = "66%";
             break;
         case STATE.VERIFIED:
@@ -93,8 +96,8 @@ function updateState(newState) {
             instructionIcon.textContent = "✅";
             progressFill.style.width = "100%";
             document.body.classList.add('success');
-            livenessScore = 98;
-            riskScore = 2;
+            livenessScore = 99;
+            riskScore = 1;
             updateMetrics();
             break;
     }
@@ -119,9 +122,6 @@ async function startDetection() {
         const resizedDetections = faceapi.resizeResults(detections, displaySize);
         canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
 
-        // Draw face box (optional, maybe just landmarks)
-        // faceapi.draw.drawDetections(canvas, resizedDetections);
-
         if (resizedDetections.length > 0) {
             const landmarks = resizedDetections[0].landmarks;
             const box = resizedDetections[0].detection.box;
@@ -138,7 +138,6 @@ async function startDetection() {
 }
 
 // Liveness Logic
-let blinkCounter = 0;
 let turnCounter = 0;
 
 function processLiveness(landmarks) {
@@ -150,38 +149,40 @@ function processLiveness(landmarks) {
     const earRight = getEAR(rightEye);
     const avgEAR = (earLeft + earRight) / 2;
 
-    // 2. Head Pose (Simple Yaw approximation using nose vs face width)
-    // Real head pose requires PnP, but we can estimate yaw by nose position relative to eyes
+    // 2. Head Pose (Yaw)
     const nose = landmarks.getNose()[0];
     const leftEyeInner = leftEye[3];
     const rightEyeInner = rightEye[0];
-
+    const eyeDist = Math.abs(rightEyeInner.x - leftEyeInner.x);
     const faceCenter = (leftEyeInner.x + rightEyeInner.x) / 2;
     const noseOffset = nose.x - faceCenter;
-    // Normalize by eye distance
-    const eyeDist = Math.abs(rightEyeInner.x - leftEyeInner.x);
-    const yawRatio = noseOffset / eyeDist; // ~0 is center, >0.5 is turn
+    const yawRatio = noseOffset / eyeDist;
 
     // State Logic
     if (currentState === STATE.SCANNING) {
         // If face is stable and centered, start challenge
-        if (Math.abs(yawRatio) < 0.2) {
+        if (Math.abs(yawRatio) < 0.2 && avgEAR > BLINK_OPEN_THRESHOLD) {
             setTimeout(() => updateState(STATE.CHALLENGE_BLINK), 1000);
         }
     }
     else if (currentState === STATE.CHALLENGE_BLINK) {
-        if (avgEAR < BLINK_THRESHOLD) {
-            blinkCounter++;
-            if (blinkCounter > 2) { // Debounce
-                updateState(STATE.CHALLENGE_TURN_LEFT);
+        // Strict Blink Sequence: OPEN -> CLOSED -> OPEN
+        if (blinkState === 'OPEN') {
+            if (avgEAR < BLINK_CLOSED_THRESHOLD) {
+                blinkState = 'CLOSED';
+                console.log("Blink: Eyes Closed");
             }
-        } else {
-            blinkCounter = 0;
+        } else if (blinkState === 'CLOSED') {
+            if (avgEAR > BLINK_OPEN_THRESHOLD) {
+                blinkState = 'COMPLETED';
+                console.log("Blink: Eyes Opened (Complete)");
+                updateState(STATE.CHALLENGE_TURN);
+            }
         }
     }
-    else if (currentState === STATE.CHALLENGE_TURN_LEFT) {
-        // Check for turn (Yaw)
-        if (yawRatio > 0.3 || yawRatio < -0.3) { // Left or Right turn accepted
+    else if (currentState === STATE.CHALLENGE_TURN) {
+        // Check for significant turn
+        if (Math.abs(yawRatio) > TURN_THRESHOLD) {
             turnCounter++;
             if (turnCounter > 3) {
                 updateState(STATE.VERIFIED);
