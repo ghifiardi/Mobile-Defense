@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YOLO Defense Hub</title>
+    <style>
+        body {
+            background-color: #050505;
+            color: #e0e0e0;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        h1 {
+            color: #00ff41;
+            margin-bottom: 40px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .btn {
+            display: block;
+            padding: 20px;
+            text-align: center;
+            text-decoration: none;
+            color: #00f2ff;
+            border: 1px solid #00f2ff;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .btn:hover {
+            background: rgba(0, 242, 255, 0.1);
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
+        }
+
+        .btn.secondary {
+            color: #ff003c;
+            border-color: #ff003c;
+        }
+
+        .btn.secondary:hover {
+            background: rgba(255, 0, 60, 0.1);
+            box-shadow: 0 0 15px rgba(255, 0, 60, 0.3);
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Defense Hub</h1>
+    <div class="menu">
+        <a href="bio-id-guard/index.html" class="btn">🧬 Bio-ID Guard (Liveness)</a>
+        <a href="motion-guard/index.html" class="btn secondary">🚨 Seismic Sentry (Motion)</a>
+    </div>
+</body>
+
+</html>

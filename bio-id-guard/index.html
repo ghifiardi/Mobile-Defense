@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bio-ID Guard | Liveness Detection</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@500;700&display=swap"
+        rel="stylesheet">
+    <!-- Load face-api.js from CDN -->
+    <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/dist/face-api.min.js"></script>
+    <script defer src="app.js"></script>
+</head>
+
+<body>
+    <div class="overlay-scan"></div>
+
+    <div class="container">
+        <header>
+            <div class="logo">BIO-ID GUARD</div>
+            <div class="status-badge" id="system-status">INITIALIZING...</div>
+        </header>
+
+        <main>
+            <div class="camera-frame">
+                <video id="video" autoplay muted playsinline></video>
+                <canvas id="overlay"></canvas>
+
+                <div class="face-guide">
+                    <div class="corner tl"></div>
+                    <div class="corner tr"></div>
+                    <div class="corner bl"></div>
+                    <div class="corner br"></div>
+                </div>
+
+                <div class="scan-line"></div>
+            </div>
+
+            <div class="instruction-panel">
+                <div class="icon-display" id="instruction-icon">👤</div>
+                <h2 id="instruction-text">Loading Models...</h2>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <div class="metric">
+                <span class="label">LIVENESS</span>
+                <span class="value" id="score-liveness">0%</span>
+            </div>
+            <div class="metric">
+                <span class="label">SPOOF RISK</span>
+                <span class="value" id="score-risk">--</span>
+            </div>
+            <div class="metric">
+                <span class="label">SESSION</span>
+                <span class="value" id="session-id">--</span>
+            </div>
+        </footer>
+    </div>
+</body>
+
+</html>

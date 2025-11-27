@@ -1,0 +1,235 @@
+:root {
+    --bg-color: #000a12;
+    --primary-color: #00f2ff;
+    /* Cyan */
+    --secondary-color: #0055ff;
+    /* Blue */
+    --alert-color: #ff003c;
+    --success-color: #00ff41;
+    --text-color: #ffffff;
+    --font-mono: 'Share Tech Mono', monospace;
+    --font-display: 'Rajdhani', sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: var(--font-display);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Scanline Overlay */
+.overlay-scan {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    background-size: 100% 2px, 3px 100%;
+    pointer-events: none;
+    z-index: 100;
+}
+
+.container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    max-width: 600px;
+    margin: 0 auto;
+    width: 100%;
+    z-index: 10;
+}
+
+/* Header */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(0, 242, 255, 0.3);
+    margin-bottom: 20px;
+}
+
+.logo {
+    font-family: var(--font-mono);
+    font-size: 1.2rem;
+    color: var(--primary-color);
+    letter-spacing: 2px;
+}
+
+.status-badge {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    padding: 4px 8px;
+    background: rgba(0, 242, 255, 0.1);
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+}
+
+/* Camera View */
+main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.camera-frame {
+    position: relative;
+    width: 100%;
+    max-width: 350px;
+    aspect-ratio: 3/4;
+    border: 2px solid rgba(0, 242, 255, 0.3);
+    background: #000;
+    overflow: hidden;
+    margin-bottom: 30px;
+    box-shadow: 0 0 20px rgba(0, 242, 255, 0.1);
+}
+
+video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1);
+    /* Mirror effect */
+}
+
+canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transform: scaleX(-1);
+    /* Match video mirror */
+}
+
+.face-guide {
+    position: absolute;
+    top: 15%;
+    left: 15%;
+    width: 70%;
+    height: 70%;
+    border: 1px dashed rgba(0, 242, 255, 0.5);
+    border-radius: 30% 30% 40% 40%;
+}
+
+.scan-line {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: var(--primary-color);
+    box-shadow: 0 0 10px var(--primary-color);
+    animation: scan 3s linear infinite;
+    opacity: 0.5;
+}
+
+@keyframes scan {
+    0% {
+        top: 0%;
+    }
+
+    100% {
+        top: 100%;
+    }
+}
+
+/* Instructions */
+.instruction-panel {
+    text-align: center;
+    width: 100%;
+}
+
+.icon-display {
+    font-size: 3rem;
+    margin-bottom: 10px;
+    height: 60px;
+}
+
+h2 {
+    font-family: var(--font-mono);
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    min-height: 1.5em;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 4px;
+    background: #222;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--primary-color);
+    transition: width 0.3s ease;
+}
+
+/* Footer */
+footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: auto;
+    padding-top: 20px;
+    border-top: 1px solid #222;
+}
+
+.metric {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.metric .label {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    color: #666;
+    margin-bottom: 4px;
+}
+
+.metric .value {
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    color: var(--primary-color);
+}
+
+/* States */
+body.success .camera-frame {
+    border-color: var(--success-color);
+}
+
+body.success .status-badge {
+    border-color: var(--success-color);
+    color: var(--success-color);
+}
+
+body.success .progress-fill {
+    background: var(--success-color);
+}
+
+body.fail .camera-frame {
+    border-color: var(--alert-color);
+}
+
+body.fail .status-badge {
+    border-color: var(--alert-color);
+    color: var(--alert-color);
+}
