@@ -10,10 +10,10 @@ const scoreLiveness = document.getElementById('score-liveness');
 const scoreRisk = document.getElementById('score-risk');
 const sessionId = document.getElementById('session-id');
 
-// Config - BALANCED THRESHOLDS
+// Config - TUNED THRESHOLDS
 const BLINK_CLOSED_THRESHOLD = 0.20; // Relaxed from 0.15 (easier to register blink)
 const BLINK_OPEN_THRESHOLD = 0.25;   // Relaxed from 0.30
-const TURN_THRESHOLD = 0.25;         // Relaxed from 0.4 (requires less extreme turn)
+const TURN_THRESHOLD = 0.15;         // Lowered to 0.15 for easier detection
 const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/';
 
 // State Machine
@@ -89,6 +89,7 @@ function updateState(newState) {
             instructionText.textContent = "Turn Head Left or Right";
             instructionIcon.textContent = "↔️";
             progressFill.style.width = "66%";
+            turnCounter = 0; // RESET COUNTER
             break;
         case STATE.VERIFIED:
             statusBadge.textContent = "ACCESS GRANTED";
@@ -158,6 +159,10 @@ function processLiveness(landmarks) {
     const noseOffset = nose.x - faceCenter;
     const yawRatio = noseOffset / eyeDist;
 
+    // DEBUG: Show metrics on screen
+    scoreLiveness.textContent = `YAW: ${yawRatio.toFixed(2)}`;
+    scoreRisk.textContent = `EAR: ${avgEAR.toFixed(2)}`;
+
     // State Logic
     if (currentState === STATE.SCANNING) {
         // If face is stable and centered, start challenge
@@ -184,7 +189,10 @@ function processLiveness(landmarks) {
         // Check for significant turn
         if (Math.abs(yawRatio) > TURN_THRESHOLD) {
             turnCounter++;
-            if (turnCounter > 3) {
+            // Visual feedback
+            progressFill.style.width = `${66 + (turnCounter * 10)}%`;
+
+            if (turnCounter > 2) { // Reduced required frames
                 updateState(STATE.VERIFIED);
             }
         }
