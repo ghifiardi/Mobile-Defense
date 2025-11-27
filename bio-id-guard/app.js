@@ -10,10 +10,10 @@ const scoreLiveness = document.getElementById('score-liveness');
 const scoreRisk = document.getElementById('score-risk');
 const sessionId = document.getElementById('session-id');
 
-// Config - TUNED THRESHOLDS
-const BLINK_CLOSED_THRESHOLD = 0.20; // Relaxed from 0.15 (easier to register blink)
-const BLINK_OPEN_THRESHOLD = 0.25;   // Relaxed from 0.30
-const TURN_THRESHOLD = 0.15;         // Lowered to 0.15 for easier detection
+// Config - RELAXED THRESHOLDS FOR USABILITY
+const BLINK_CLOSED_THRESHOLD = 0.25; // Easier to register "closed"
+const BLINK_OPEN_THRESHOLD = 0.20;   // Easier to register "open"
+const TURN_THRESHOLD = 0.15;
 const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/';
 
 // State Machine
@@ -135,7 +135,7 @@ async function startDetection() {
 
             processLiveness(landmarks);
         }
-    }, 100);
+    }, 50); // Faster polling (50ms) to catch blinks
 }
 
 // Liveness Logic
@@ -175,12 +175,12 @@ function processLiveness(landmarks) {
         if (blinkState === 'OPEN') {
             if (avgEAR < BLINK_CLOSED_THRESHOLD) {
                 blinkState = 'CLOSED';
-                console.log("Blink: Eyes Closed");
+                instructionText.textContent = "Hold..."; // Visual Feedback
+                instructionIcon.textContent = "😌";
             }
         } else if (blinkState === 'CLOSED') {
             if (avgEAR > BLINK_OPEN_THRESHOLD) {
                 blinkState = 'COMPLETED';
-                console.log("Blink: Eyes Opened (Complete)");
                 updateState(STATE.CHALLENGE_TURN);
             }
         }
