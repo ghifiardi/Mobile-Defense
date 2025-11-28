@@ -31,6 +31,7 @@ let riskScore = 0;
 
 // Blink State Tracking
 let blinkState = 'OPEN'; // OPEN -> CLOSING -> CLOSED -> OPENING -> OPEN (Complete Blink)
+let transitioning = false; // Prevent multiple timeouts
 
 // Initialize
 async function init() {
@@ -69,6 +70,7 @@ async function startCamera() {
 
 function updateState(newState) {
     currentState = newState;
+    transitioning = false; // Reset flag
 
     switch (newState) {
         case STATE.SCANNING:
@@ -152,13 +154,20 @@ function processLiveness(landmarks, expressions) {
     const avgEAR = (earLeft + earRight) / 2;
 
     // DEBUG: Show metrics
-    scoreLiveness.textContent = `Happy: ${(expressions.happy || 0).toFixed(2)}`;
+    // Show Neutral score during scanning, Happy score during smile challenge
+    if (currentState === STATE.SCANNING) {
+        scoreLiveness.textContent = `Neutral: ${(expressions.neutral || 0).toFixed(2)}`;
+    } else {
+        scoreLiveness.textContent = `Happy: ${(expressions.happy || 0).toFixed(2)}`;
+    }
     scoreRisk.textContent = `EAR: ${avgEAR.toFixed(2)}`;
 
     // State Logic
     if (currentState === STATE.SCANNING) {
         // Require Neutral Face first (Anti-Spoofing: Photo can't change expression)
-        if (expressions.neutral > 0.6) {
+        if (expressions.neutral > 0.5 && !transitioning) {
+            transitioning = true;
+            statusBadge.textContent = "NEUTRAL DETECTED...";
             setTimeout(() => updateState(STATE.CHALLENGE_SMILE), 1000);
         }
     }
