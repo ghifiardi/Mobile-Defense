@@ -11,8 +11,9 @@ const scoreRisk = document.getElementById('score-risk');
 const sessionId = document.getElementById('session-id');
 
 // Config
-const BLINK_CLOSED_THRESHOLD = 0.20;
-const BLINK_OPEN_THRESHOLD = 0.25;
+const BLINK_CLOSED_THRESHOLD = 0.22; // Easier to close
+const BLINK_OPEN_THRESHOLD = 0.24;   // Easier to open (was 0.25)
+const TIMEOUT_MS = 15000;            // 15 seconds timeout
 const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/';
 
 // State Machine
@@ -32,6 +33,7 @@ let riskScore = 0;
 // Blink State Tracking
 let blinkState = 'OPEN'; // OPEN -> CLOSING -> CLOSED -> OPENING -> OPEN (Complete Blink)
 let transitioning = false; // Prevent multiple timeouts
+let stateStartTime = 0; // Timer for timeout
 
 // Initialize
 async function init() {
@@ -71,6 +73,7 @@ async function startCamera() {
 function updateState(newState) {
     currentState = newState;
     transitioning = false; // Reset flag
+    stateStartTime = Date.now(); // Reset timer
 
     switch (newState) {
         case STATE.SCANNING:
@@ -102,6 +105,17 @@ function updateState(newState) {
             riskScore = 1;
             updateMetrics();
             break;
+        case STATE.REJECTED:
+            statusBadge.textContent = "ACCESS DENIED";
+            instructionText.textContent = "Timeout: Verification Failed";
+            instructionIcon.textContent = "❌";
+            progressFill.style.width = "0%";
+            document.body.style.backgroundColor = "#2a0000";
+            setTimeout(() => {
+                document.body.style.backgroundColor = "";
+                updateState(STATE.SCANNING);
+            }, 3000); // Retry after 3s
+            break;
     }
 }
 
@@ -116,7 +130,15 @@ async function startDetection() {
     faceapi.matchDimensions(canvas, displaySize);
 
     setInterval(async () => {
-        if (currentState === STATE.VERIFIED || currentState === STATE.REJECTED) return;
+        if (currentState === STATE.VERIFIED) return; // Stop if verified
+
+        // Check Timeout
+        if (currentState !== STATE.SCANNING && currentState !== STATE.LOADING && currentState !== STATE.REJECTED && currentState !== STATE.VERIFIED) {
+            if (Date.now() - stateStartTime > TIMEOUT_MS) {
+                updateState(STATE.REJECTED);
+                return;
+            }
+        }
 
         // Detect Faces + Landmarks + Expressions
         const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
@@ -157,8 +179,10 @@ function processLiveness(landmarks, expressions) {
     // Show Neutral score during scanning, Happy score during smile challenge
     if (currentState === STATE.SCANNING) {
         scoreLiveness.textContent = `Neutral: ${(expressions.neutral || 0).toFixed(2)}`;
-    } else {
+    } else if (currentState === STATE.CHALLENGE_SMILE) {
         scoreLiveness.textContent = `Happy: ${(expressions.happy || 0).toFixed(2)}`;
+    } else if (currentState === STATE.CHALLENGE_BLINK) {
+        scoreLiveness.textContent = `State: ${blinkState}`;
     }
     scoreRisk.textContent = `EAR: ${avgEAR.toFixed(2)}`;
 
