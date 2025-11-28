@@ -10,11 +10,11 @@ const scoreLiveness = document.getElementById('score-liveness');
 const scoreRisk = document.getElementById('score-risk');
 const sessionId = document.getElementById('session-id');
 
-// Config - EASY MODE (DEMO)
-const BLINK_CLOSED_THRESHOLD = 0.30; // Very forgiving (was 0.22)
-const BLINK_OPEN_THRESHOLD = 0.20;   // Very forgiving (was 0.24)
-const SMILE_THRESHOLD = 0.5;         // Moderate smile (was 0.7)
-const TIMEOUT_MS = 20000;            // 20 seconds timeout
+// Config - BALANCED THRESHOLDS
+const BLINK_CLOSED_THRESHOLD = 0.18; // Must close eyes (EAR < 0.18)
+const BLINK_OPEN_THRESHOLD = 0.25;   // Must open eyes (EAR > 0.25)
+const SMILE_THRESHOLD = 0.5;
+const TIMEOUT_MS = 20000;
 const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/';
 
 // State Machine
