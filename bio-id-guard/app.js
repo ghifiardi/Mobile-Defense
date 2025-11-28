@@ -10,11 +10,11 @@ const scoreLiveness = document.getElementById('score-liveness');
 const scoreRisk = document.getElementById('score-risk');
 const sessionId = document.getElementById('session-id');
 
-// Config - BALANCED THRESHOLDS
-const BLINK_CLOSED_THRESHOLD = 0.18; // Must close eyes (EAR < 0.18)
+// Config - DEBUG MODE
+const BLINK_CLOSED_THRESHOLD = 0.20; // Must close eyes (EAR < 0.20)
 const BLINK_OPEN_THRESHOLD = 0.25;   // Must open eyes (EAR > 0.25)
 const SMILE_THRESHOLD = 0.5;
-const TIMEOUT_MS = 20000;
+const TIMEOUT_MS = 30000;            // Extended to 30s for debugging
 const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/';
 
 // State Machine
@@ -205,12 +205,14 @@ function processLiveness(landmarks, expressions) {
     else if (currentState === STATE.CHALLENGE_BLINK) {
         // Blink Sequence
         if (blinkState === 'OPEN') {
+            instructionText.textContent = `Close Eyes (EAR: ${avgEAR.toFixed(2)} < ${BLINK_CLOSED_THRESHOLD})`;
             if (avgEAR < BLINK_CLOSED_THRESHOLD) {
                 blinkState = 'CLOSED';
                 instructionText.textContent = "Hold...";
                 instructionIcon.textContent = "😌";
             }
         } else if (blinkState === 'CLOSED') {
+            instructionText.textContent = `Open Eyes (EAR: ${avgEAR.toFixed(2)} > ${BLINK_OPEN_THRESHOLD})`;
             if (avgEAR > BLINK_OPEN_THRESHOLD) {
                 blinkState = 'COMPLETED';
                 updateState(STATE.VERIFIED);
