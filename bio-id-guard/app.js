@@ -10,10 +10,11 @@ const scoreLiveness = document.getElementById('score-liveness');
 const scoreRisk = document.getElementById('score-risk');
 const sessionId = document.getElementById('session-id');
 
-// Config
-const BLINK_CLOSED_THRESHOLD = 0.22; // Easier to close
-const BLINK_OPEN_THRESHOLD = 0.24;   // Easier to open (was 0.25)
-const TIMEOUT_MS = 15000;            // 15 seconds timeout
+// Config - EASY MODE (DEMO)
+const BLINK_CLOSED_THRESHOLD = 0.30; // Very forgiving (was 0.22)
+const BLINK_OPEN_THRESHOLD = 0.20;   // Very forgiving (was 0.24)
+const SMILE_THRESHOLD = 0.5;         // Moderate smile (was 0.7)
+const TIMEOUT_MS = 20000;            // 20 seconds timeout
 const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/';
 
 // State Machine
@@ -189,7 +190,7 @@ function processLiveness(landmarks, expressions) {
     // State Logic
     if (currentState === STATE.SCANNING) {
         // Require Neutral Face first (Anti-Spoofing: Photo can't change expression)
-        if (expressions.neutral > 0.5 && !transitioning) {
+        if (expressions.neutral > 0.4 && !transitioning) { // Relaxed neutral
             transitioning = true;
             statusBadge.textContent = "NEUTRAL DETECTED...";
             setTimeout(() => updateState(STATE.CHALLENGE_SMILE), 1000);
@@ -197,7 +198,7 @@ function processLiveness(landmarks, expressions) {
     }
     else if (currentState === STATE.CHALLENGE_SMILE) {
         // Require Smile
-        if (expressions.happy > 0.7) {
+        if (expressions.happy > SMILE_THRESHOLD) {
             updateState(STATE.CHALLENGE_BLINK);
         }
     }
