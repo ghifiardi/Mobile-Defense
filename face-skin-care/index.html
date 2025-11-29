@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lumière Skin AI | Advanced Dermatology Analysis</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Face API -->
+    <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/dist/face-api.js"></script>
+    <!-- OpenCV.js (for advanced image processing) -->
+    <script defer src="https://docs.opencv.org/4.8.0/opencv.js"></script>
+    <script defer src="app.js"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header>
+            <div class="logo">Lumière <span>AI</span></div>
+            <div class="status-pill" id="system-status">INITIALIZING...</div>
+        </header>
+
+        <!-- Main Scanner Area -->
+        <main class="scanner-view">
+            <video id="video" autoplay muted playsinline></video>
+            <canvas id="overlay"></canvas>
+
+            <!-- Scanning UI Overlays -->
+            <div class="scan-frame">
+                <div class="corner tl"></div>
+                <div class="corner tr"></div>
+                <div class="corner bl"></div>
+                <div class="corner br"></div>
+                <div class="scan-line"></div>
+            </div>
+
+            <div class="instruction-overlay">
+                <div class="icon" id="instruction-icon">👤</div>
+                <p id="instruction-text">Align Face to Start Scan</p>
+            </div>
+        </main>
+
+        <!-- Results Dashboard (Hidden initially) -->
+        <div class="results-panel" id="results-panel">
+            <div class="panel-header">
+                <h2>Skin Health Report</h2>
+                <button class="close-btn" onclick="resetScan()">✕</button>
+            </div>
+
+            <div class="score-circle">
+                <svg viewBox="0 0 36 36" class="circular-chart">
+                    <path class="circle-bg"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <path class="circle" stroke-dasharray="0, 100"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <text x="18" y="20.35" class="percentage">0%</text>
+                </svg>
+                <p>Overall Health</p>
+            </div>
+
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <span class="label">Acne / Blemishes</span>
+                    <div class="bar-container">
+                        <div class="bar" id="bar-acne" style="width: 0%"></div>
+                    </div>
+                    <span class="value" id="val-acne">Analyzing...</span>
+                </div>
+                <div class="metric-card">
+                    <span class="label">Texture / Pores</span>
+                    <div class="bar-container">
+                        <div class="bar" id="bar-texture" style="width: 0%"></div>
+                    </div>
+                    <span class="value" id="val-texture">Analyzing...</span>
+                </div>
+                <div class="metric-card">
+                    <span class="label">Dark Circles</span>
+                    <div class="bar-container">
+                        <div class="bar" id="bar-circles" style="width: 0%"></div>
+                    </div>
+                    <span class="value" id="val-circles">Analyzing...</span>
+                </div>
+            </div>
+
+            <div class="recommendation">
+                <h3>AI Recommendation</h3>
+                <p id="ai-recommendation">Complete the scan to receive personalized advice.</p>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button id="btn-scan" class="primary-btn" disabled>START SCAN</button>
+        </div>
+    </div>
+</body>
+
+</html>

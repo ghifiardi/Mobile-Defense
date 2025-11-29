@@ -1,0 +1,366 @@
+:root {
+    --primary: #2A9D8F;
+    /* Teal */
+    --secondary: #264653;
+    /* Dark Blue-Green */
+    --accent: #E9C46A;
+    /* Gold */
+    --bg: #F4F7F6;
+    /* Off-white */
+    --text: #264653;
+    --white: #FFFFFF;
+    --glass: rgba(255, 255, 255, 0.85);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Outfit', sans-serif;
+}
+
+body {
+    background-color: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+}
+
+.app-container {
+    width: 100%;
+    max-width: 480px;
+    /* Mobile first */
+    height: 100%;
+    position: relative;
+    background: var(--white);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+header {
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 10;
+    background: var(--glass);
+    backdrop-filter: blur(10px);
+    position: absolute;
+    top: 0;
+    width: 100%;
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--secondary);
+    letter-spacing: 1px;
+}
+
+.logo span {
+    color: var(--primary);
+}
+
+.status-pill {
+    font-size: 0.7rem;
+    background: rgba(42, 157, 143, 0.1);
+    color: var(--primary);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+}
+
+/* Scanner View */
+.scanner-view {
+    flex: 1;
+    position: relative;
+    background: #000;
+    overflow: hidden;
+}
+
+video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1);
+    /* Mirror */
+}
+
+canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transform: scaleX(-1);
+    /* Mirror overlay too */
+}
+
+/* Scan Frame UI */
+.scan-frame {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 70%;
+    height: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 20px;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+    /* Dim outside */
+}
+
+.corner {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 3px solid var(--primary);
+}
+
+.tl {
+    top: -1px;
+    left: -1px;
+    border-right: 0;
+    border-bottom: 0;
+    border-radius: 10px 0 0 0;
+}
+
+.tr {
+    top: -1px;
+    right: -1px;
+    border-left: 0;
+    border-bottom: 0;
+    border-radius: 0 10px 0 0;
+}
+
+.bl {
+    bottom: -1px;
+    left: -1px;
+    border-right: 0;
+    border-top: 0;
+    border-radius: 0 0 0 10px;
+}
+
+.br {
+    bottom: -1px;
+    right: -1px;
+    border-left: 0;
+    border-top: 0;
+    border-radius: 0 0 10px 0;
+}
+
+.scan-line {
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    background: var(--primary);
+    box-shadow: 0 0 10px var(--primary);
+    top: 0;
+    animation: scan 3s infinite linear;
+    opacity: 0.8;
+}
+
+@keyframes scan {
+    0% {
+        top: 0;
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 1;
+    }
+
+    90% {
+        opacity: 1;
+    }
+
+    100% {
+        top: 100%;
+        opacity: 0;
+    }
+}
+
+.instruction-overlay {
+    position: absolute;
+    bottom: 100px;
+    width: 100%;
+    text-align: center;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.instruction-overlay .icon {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+/* Controls */
+.controls {
+    position: absolute;
+    bottom: 30px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    z-index: 10;
+}
+
+.primary-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 15px 40px;
+    border-radius: 30px;
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 15px rgba(42, 157, 143, 0.4);
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+}
+
+.primary-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.primary-btn:active {
+    transform: scale(0.95);
+}
+
+/* Results Panel */
+.results-panel {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 80%;
+    background: var(--white);
+    border-radius: 30px 30px 0 0;
+    padding: 30px;
+    transform: translateY(110%);
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 20;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+}
+
+.results-panel.active {
+    transform: translateY(0);
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text);
+}
+
+/* Score Circle */
+.score-circle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.circular-chart {
+    display: block;
+    margin: 0 auto;
+    max-width: 150px;
+    max-height: 150px;
+}
+
+.circle-bg {
+    fill: none;
+    stroke: #eee;
+    stroke-width: 2.5;
+}
+
+.circle {
+    fill: none;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke: var(--primary);
+    transition: stroke-dasharray 1s ease;
+}
+
+.percentage {
+    fill: var(--text);
+    font-family: 'Outfit', sans-serif;
+    font-weight: bold;
+    font-size: 0.5em;
+    text-anchor: middle;
+}
+
+/* Metrics */
+.metrics-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.metric-card {
+    background: #f9f9f9;
+    padding: 15px;
+    border-radius: 15px;
+}
+
+.metric-card .label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--secondary);
+    display: block;
+    margin-bottom: 8px;
+}
+
+.bar-container {
+    width: 100%;
+    height: 8px;
+    background: #eee;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.bar {
+    height: 100%;
+    background: var(--primary);
+    transition: width 1s ease;
+}
+
+.metric-card .value {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.recommendation {
+    margin-top: 30px;
+    padding: 20px;
+    background: rgba(233, 196, 106, 0.1);
+    border-radius: 15px;
+    border-left: 4px solid var(--accent);
+}
+
+.recommendation h3 {
+    font-size: 1rem;
+    color: var(--secondary);
+    margin-bottom: 10px;
+}
+
+.recommendation p {
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
