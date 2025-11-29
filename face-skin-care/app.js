@@ -89,93 +89,164 @@ btnScan.addEventListener('click', async () => {
     isScanning = true;
     btnScan.disabled = true;
     btnScan.textContent = "SCANNING...";
-    instructionText.textContent = "Hold Still...";
+    instructionText.textContent = "Hold Still... Analyzing...";
 
-    // Simulate scanning process
-    setTimeout(async () => {
+    // Multi-frame Analysis (Average over 10 frames)
+    let frames = 0;
+    const maxFrames = 10;
+    const accumulated = { health: 0, acne: 0, texture: 0, circles: 0 };
+
+    const scanInterval = setInterval(async () => {
         try {
-            await performSkinAnalysis();
+            const result = await performSingleFrameAnalysis();
+            if (result) {
+                accumulated.health += result.health;
+                accumulated.acne += result.acne;
+                accumulated.texture += result.texture;
+                accumulated.circles += result.circles;
+                frames++;
+
+                // Visual feedback
+                btnScan.textContent = `SCANNING ${Math.round((frames / maxFrames) * 100)}%`;
+            }
+
+            if (frames >= maxFrames) {
+                clearInterval(scanInterval);
+
+                // Calculate Averages
+                const finalResult = {
+                    health: Math.round(accumulated.health / frames),
+                    acne: Math.round(accumulated.acne / frames),
+                    texture: Math.round(accumulated.texture / frames),
+                    circles: Math.round(accumulated.circles / frames)
+                };
+
+                showResults(finalResult);
+            }
         } catch (error) {
             console.error(error);
+            clearInterval(scanInterval);
             alert("Analysis failed: " + error.message);
             resetScan();
         }
-    }, 2000);
+    }, 200); // Run every 200ms
 });
 
-async function performSkinAnalysis() {
-    // 1. Capture current frame
+async function performSingleFrameAnalysis() {
     const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
         .withFaceLandmarks();
 
-    if (detections.length === 0) {
-        alert("Face not found! Please try again.");
-        resetScan();
-        return;
-    }
+    if (detections.length === 0) return null;
 
     const landmarks = detections[0].landmarks;
+    const positions = landmarks.positions;
 
-    // 2. Extract ROI (Region of Interest) - Cheeks & Forehead
-    // Simple approximation using landmark indices
-    const leftCheek = extractRegion(landmarks.positions, [2, 3, 4, 31, 48]); // Approx indices
-    const rightCheek = extractRegion(landmarks.positions, [12, 13, 14, 35, 54]);
-    const forehead = extractRegion(landmarks.positions, [19, 24, 71, 72]); // Fake indices for logic
+    // Extract Features
+    // 1. Acne (Redness) - Global Face
+    const rednessScore = analyzeRedness();
 
-    // 3. Analyze (Simulated + Basic Pixel Logic)
-    // In a real app, we would crop these regions and run pixel analysis.
-    // Here we will run a full-frame analysis for redness/edges as a proxy.
+    // 2. Texture (Variance/Roughness) - Cheeks
+    // Left Cheek: 2-4 (Jaw), 31 (Nose), 48 (Mouth) -> Approx Center
+    const textureScore = analyzeTexture(positions);
 
-    const analysis = analyzeFramePixels();
+    // 3. Dark Circles - Under Eyes
+    // Left Eye: 36-41, Right Eye: 42-47
+    const circlesScore = analyzeDarkCircles(positions);
 
-    // 4. Show Results
-    showResults(analysis);
+    // Normalize
+    const acneMetric = Math.min(100, rednessScore * 2);
+    const textureMetric = Math.min(100, textureScore * 5);
+    const circlesMetric = Math.min(100, circlesScore * 3);
+
+    const overallHealth = 100 - ((acneMetric * 0.4 + textureMetric * 0.3 + circlesMetric * 0.3));
+
+    return {
+        health: Math.max(10, overallHealth), // Min score 10
+        acne: acneMetric,
+        texture: textureMetric,
+        circles: circlesMetric
+    };
 }
 
-function extractRegion(positions, indices) {
-    // Placeholder for cropping logic
-    return null;
-}
-
-function analyzeFramePixels() {
-    // Get video frame data
+function analyzeRedness() {
     const ctx = canvas.getContext('2d');
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const data = frame.data;
 
-    let rednessScore = 0;
-    let edgeScore = 0;
+    let rednessCount = 0;
     let pixelCount = data.length / 4;
 
-    // Simple Redness Detection (Acne Proxy)
-    // High Red channel relative to Green/Blue
     for (let i = 0; i < data.length; i += 4) {
         const r = data[i];
         const g = data[i + 1];
         const b = data[i + 2];
+        // Inflammation: R > G+15 & R > B+15
+        if (r > g + 15 && r > b + 15) {
+            rednessCount++;
+        }
+    }
+    return (rednessCount / pixelCount) * 100;
+}
 
-        // Skin tone logic: R > G > B usually
-        // Inflammation: R is significantly higher than G
-        if (r > g + 20 && r > b + 20) {
-            rednessScore++;
+function analyzeTexture(landmarks) {
+    // Simple Variance/StdDev on grayscale image (Roughness proxy)
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width;
+    const h = canvas.height;
+    const frame = ctx.getImageData(0, 0, w, h);
+    const data = frame.data;
+
+    let sum = 0;
+    let sumSq = 0;
+    let count = 0;
+
+    // Sample center of face (approx)
+    const startX = Math.floor(w * 0.3);
+    const endX = Math.floor(w * 0.7);
+    const startY = Math.floor(h * 0.3);
+    const endY = Math.floor(h * 0.7);
+
+    for (let y = startY; y < endY; y += 4) { // Skip pixels for speed
+        for (let x = startX; x < endX; x += 4) {
+            const i = (y * w + x) * 4;
+            const gray = (data[i] + data[i + 1] + data[i + 2]) / 3;
+            sum += gray;
+            sumSq += gray * gray;
+            count++;
         }
     }
 
-    // Normalize scores (Arbitrary calibration for demo)
-    const acneMetric = Math.min(100, (rednessScore / pixelCount) * 500); // Scale up
-    const textureMetric = Math.random() * 30 + 10; // Placeholder for edge detection (requires OpenCV.js)
-    const circlesMetric = Math.random() * 40 + 20;
+    const mean = sum / count;
+    const variance = (sumSq / count) - (mean * mean);
+    return Math.sqrt(variance) / 10; // StdDev scaled down
+}
 
-    // Calculate Overall Health (Inverse of issues)
-    const overallHealth = 100 - ((acneMetric + textureMetric + circlesMetric) / 3);
+function analyzeDarkCircles(landmarks) {
+    // Compare Under-Eye brightness vs Cheek brightness
+    const ctx = canvas.getContext('2d');
 
-    return {
-        health: Math.round(overallHealth),
-        acne: Math.round(acneMetric),
-        texture: Math.round(textureMetric),
-        circles: Math.round(circlesMetric)
+    // Helper to get brightness at a point
+    const getBrightness = (idx) => {
+        const p = landmarks[idx];
+        const pixel = ctx.getImageData(p.x, p.y, 1, 1).data;
+        return (pixel[0] + pixel[1] + pixel[2]) / 3;
     };
+
+    // Under Eyes (Landmarks 41, 40 for Left | 46, 47 for Right)
+    const underEyeL = (getBrightness(41) + getBrightness(40)) / 2;
+    const underEyeR = (getBrightness(46) + getBrightness(47)) / 2;
+    const underEyeAvg = (underEyeL + underEyeR) / 2;
+
+    // Cheeks (Landmarks 31 (Nose side), 35)
+    const cheekL = getBrightness(31);
+    const cheekR = getBrightness(35);
+    const cheekAvg = (cheekL + cheekR) / 2;
+
+    // Dark Circles = Cheek Brightness - UnderEye Brightness
+    // If UnderEye is darker, diff is positive.
+    const diff = cheekAvg - underEyeAvg;
+    return Math.max(0, diff);
 }
 
 function showResults(data) {
