@@ -93,7 +93,13 @@ btnScan.addEventListener('click', async () => {
 
     // Simulate scanning process
     setTimeout(async () => {
-        await performSkinAnalysis();
+        try {
+            await performSkinAnalysis();
+        } catch (error) {
+            console.error(error);
+            alert("Analysis failed: " + error.message);
+            resetScan();
+        }
     }, 2000);
 });
 
@@ -177,8 +183,8 @@ function showResults(data) {
 
     // Animate Circle
     const circle = document.querySelector('.circle');
-    const radius = circle.r.baseVal.value;
-    const circumference = radius * 2 * Math.PI;
+    // FIX: Path element doesn't have radius. Use 100 as circumference for this specific SVG path.
+    const circumference = 100;
     const offset = circumference - (data.health / 100) * circumference;
 
     circle.style.strokeDasharray = `${circumference} ${circumference}`;
