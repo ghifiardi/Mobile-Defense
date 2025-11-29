@@ -272,14 +272,57 @@ function showResults(data) {
     updateBar('bar-circles', 'val-circles', data.circles, "Pigmentation");
 
     // Recommendation
-    const recText = document.getElementById('ai-recommendation');
-    if (data.acne > 30) {
-        recText.textContent = "We detected some redness/inflammation. Consider using a soothing cleanser with Salicylic Acid and a lightweight moisturizer.";
-    } else if (data.texture > 30) {
-        recText.textContent = "Skin texture appears slightly uneven. A gentle exfoliant (AHA/BHA) twice a week could help smooth the surface.";
-    } else {
-        recText.textContent = "Your skin looks healthy and radiant! Keep up your current routine of hydration and sun protection.";
+    const diagnostic = generateDiagnostic(data);
+    const recContainer = document.getElementById('ai-recommendation');
+
+    recContainer.innerHTML = `
+        <div style="margin-bottom: 10px;">
+            <strong style="color: #264653;">Diagnosis:</strong><br>
+            ${diagnostic.diagnosis}
+        </div>
+        <div style="margin-bottom: 10px;">
+            <strong style="color: #2A9D8F;">Hero Ingredients:</strong><br>
+            ${diagnostic.ingredients}
+        </div>
+        <div>
+            <strong style="color: #E9C46A;">Routine Tip:</strong><br>
+            ${diagnostic.routine}
+        </div>
+    `;
+}
+
+function generateDiagnostic(data) {
+    const issues = [];
+    if (data.acne > 30) issues.push('acne');
+    if (data.texture > 30) issues.push('texture');
+    if (data.circles > 30) issues.push('circles');
+
+    let diagnosis = "Your skin barrier appears healthy and balanced. Keep up the great work!";
+    let ingredients = "Hyaluronic Acid, Ceramides, SPF 30+";
+    let routine = "Focus on hydration and sun protection to maintain your glow.";
+
+    if (issues.includes('acne') && issues.includes('texture')) {
+        diagnosis = "Signs of **Congestion & Uneven Tone**. Your skin may be struggling with cell turnover, leading to both blemishes and roughness.";
+        ingredients = "Salicylic Acid (BHA), Niacinamide, Retinol";
+        routine = "Double cleanse at night. Use a BHA exfoliant 2-3 times a week to unclog pores.";
     }
+    else if (issues.includes('acne')) {
+        diagnosis = "Detected **Active Inflammation**. Redness suggests sensitivity or breakout activity.";
+        ingredients = "Centella Asiatica, Azelaic Acid, Zinc PCA";
+        routine = "Simplify your routine. Avoid harsh scrubs. Use a spot treatment and a barrier-repairing moisturizer.";
+    }
+    else if (issues.includes('texture')) {
+        diagnosis = "Skin appears **Dehydrated or Rough**. The surface lacks smoothness, likely due to dead skin cell buildup.";
+        ingredients = "Glycolic Acid (AHA), Lactic Acid, Vitamin C";
+        routine = "Incorporate a chemical exfoliant (AHA) to reveal smoother skin. Ensure you are drinking enough water.";
+    }
+    else if (issues.includes('circles')) {
+        diagnosis = "Signs of **Fatigue & Pigmentation**. The under-eye area shows contrast, indicating tiredness or genetic shadowing.";
+        ingredients = "Caffeine, Vitamin K, Peptides";
+        routine = "Try a cold compress in the morning. Use an eye cream with caffeine to constrict blood vessels.";
+    }
+
+    return { diagnosis, ingredients, routine };
 }
 
 function updateBar(barId, valId, value, label) {
